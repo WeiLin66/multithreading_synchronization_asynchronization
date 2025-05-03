@@ -12,22 +12,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "glthread.h/glthread.h"
+#include "../glthread/glthread.h"
 
 // Route table node structure
-struct route_table_node {
+typedef struct route_table_node {
     char *dest_addr; // Destination address
     char *mask;      // Mask
     char *oif;       // Outgoing interface
     char *gateway;   // Gateway address
-    struct glthread subscriber_list; // Linked list of subscribers
-    struct glthread list; // Double Linked list pointer to the next route table node
-};route_table_node_t;
+    glthread_t subscriber_list; // Linked list of subscribers
+    glthread_t list; // Double Linked list pointer to the next route table node
+} route_table_node_t;
 
 // Route table structure
 struct route_table {
     char* description; // Description of the route table
-    struct route_table_node *head;
+    route_table_node_t  *head;
     int count;
 } route_table_instance;
 
@@ -40,5 +40,7 @@ route_table_node_t *get_route_table_node_by_gateway(char *gateway);
 void print_route_table(void);
 void free_route_table(void);
 int count_route_table_nodes(void);
+route_table_instance_t* get_route_table_head(void);
+route_table_node_t *get_route_table_node_by_dest_and_mask(char *dest_addr, char *mask);
 
 #endif // ROUTE_TABLE_H

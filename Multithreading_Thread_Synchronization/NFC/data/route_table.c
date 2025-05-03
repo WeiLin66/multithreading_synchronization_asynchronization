@@ -86,6 +86,21 @@ route_table_node_t *get_route_table_node_by_gateway(char *gateway) {
     return NULL;
 }
 
+// Function to get the route table by both destination address and mask
+route_table_node_t *get_route_table_node_by_dest_and_mask(char *dest_addr, char *mask) {
+    if (!route_table_head) {
+        return NULL;
+    }
+    route_table_node_t *curr = (route_table_node_t *)route_table_head->head;
+    while (curr) {
+        if (strcmp(curr->dest_addr, dest_addr) == 0 && strcmp(curr->mask, mask) == 0) {
+            return curr;
+        }
+        curr = (route_table_node_t *)curr->list.right;
+    }
+    return NULL;
+}
+
 // Function to print the route table
 void print_route_table(void) {
     if (!route_table_head) {
@@ -129,4 +144,9 @@ int count_route_table_nodes(void) {
         return 0;
     }
     return route_table_head->count;
+}
+
+// Function to get the route table head
+route_table_instance_t* get_route_table_head(void) {
+    return route_table_head;
 }
