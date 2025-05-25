@@ -2,22 +2,17 @@
 #define __ROUTE_TABLE_SUBSCRIBER__
 
 #include <stddef.h>  /* for size_t */
-#include "utils.h"
-#include "gluethread/glthread.h"
+//#include <utils.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
+#include "route_table.h"
+#include "../gtheard/glthread.h"
 
 #define MAX_NOTIF_KEY_SIZE	64
 
-typedef enum{
-	NFC_UNKNOWN,
-	NFC_SUB,
-	NFC_ADD,
-	NFC_MOD,
-	NFC_DEL,
-} nfc_op_t;
-
 static inline char *nfc_get_str_op_code(nfc_op_t nfc_op_code) {
-	static char op_code_str[16];
-
 	switch(nfc_op_code) {
 
 		case NFC_UNKNOWN:
@@ -35,16 +30,6 @@ static inline char *nfc_get_str_op_code(nfc_op_t nfc_op_code) {
 	}
 }
 
-typedef void (*nfc_app_cb)(void *, size_t, nfc_op_t, uint32_t);
-
-typedef struct route_table_notif_elem {
-    char key[MAX_NOTIF_KEY_SIZE]; // Destination address
-    size_t key_size;
-    uint32_t subs_id; // Subscriber ID
-    bool is_key_set;
-    void (*app_cb)(void *, size_t, uint32_t); // Callback function
-    glthread_t glue; // Glue thread for linked list
-} route_table_notif_elem_t;
-
+void create_subscriber_thread(void);
 
 #endif /* __ROUTE_TABLE_SUBSCRIBER__ */

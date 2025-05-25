@@ -2,6 +2,61 @@
 #include "route_table.h"
 #include <stddef.h>
 
+// Global variable to hold the route // Function to remove a route table node from the route_table_head
+void remove_route_table_node(route_table_node_t *node) {
+    if (!route_table_head || !node) {
+        return;
+    }
+    
+    // Notify subscribers before removal
+    notify_subscribers(node, NFC_DEL);
+    
+    // Remove from glthread list
+    remove_glthread(&node->list);
+    
+    free(node);
+    route_table_head->count--;
+}
+
+// Function to get the route table node by destination address
+route_table_node_t *get_route_table_node(char *dest_addr) {
+    if (!route_table_head || !dest_addr) {
+        return NULL;
+    }
+    
+    glthread_t *curr;
+    route_table_node_t *node;
+    
+    ITERATE_GLTHREAD_BEGIN(&route_table_head->list, curr) {
+        node = glue_to_route_node(curr);
+        if (node->dest_addr && strcmp(node->dest_addr, dest_addr) == 0) {
+            return node;
+        }
+    } ITERATE_GLTHREAD_END(&route_table_head->list, curr);
+    
+    return NULL;
+}
+
+// Function to get the route table node by gateway address
+// Function to get the route table node by gateway address
+route_table_node_t *get_route_table_node_by_gateway(char *gateway) {
+    if (!route_table_head || !gateway) {
+        return NULL;
+    }
+    
+    glthread_t *curr;
+    route_table_node_t *node;
+    
+    ITERATE_GLTHREAD_BEGIN(&route_table_head->list, curr) {
+        node = glue_to_route_node(curr);
+        if (node->gateway && strcmp(node->gateway, gateway) == 0) {
+            return node;
+        }
+    } ITERATE_GLTHREAD_END(&route_table_head->list, curr);
+    
+    return NULL;
+}
+
 // Global variable to hold the route table head
 static route_table_instance_t *route_table_head = NULL;
 
@@ -132,26 +187,11 @@ void remove_route_table_node(route_table_node_t *node) {
     route_table_head->count--;
 }
 
-// Function to get the route table node by destination address
+// Functio to get the route table node by destination address
 route_table_node_t *get_route_table_node(char *dest_addr) {
     if (!route_table_head || !dest_addr) {
         return NULL;
-    }
-    
-    glthread_t *curr;
-    route_table_node_t *node;
-    
-    ITERATE_GLTHREAD_BEGIN(&route_table_head->list, curr) {
-        node = glue_to_route_node(curr);
-        if (node->dest_addr && strcmp(node->dest_addr, dest_addr) == 0) {
-            return node;
-        }
-    } ITERATE_GLTHREAD_END(&route_table_head->list, curr);
-    
-    return NULL;
-}
-
-// Function to get the route table node by gateway address
+    // Function to get the route table node by gateway address
 route_table_node_t *get_route_table_node_by_gateway(char *gateway) {
     if (!route_table_head || !gateway) {
         return NULL;
@@ -232,7 +272,7 @@ route_table_instance_t* get_route_table_head(void) {
     return route_table_head;
 }
 
-// Function to notify all subscribers
+// 需要添加通知所有訂閱者的函數
 void notify_subscribers(route_table_node_t *node, nfc_op_t op) {
     if (!node) return;
     
@@ -262,29 +302,44 @@ int modify_route_table_node(char *dest_addr, char *current_mask, char *new_mask,
         return 0; // Failed - node not found
     }
     
-    // Update mask if provided
-    if (new_mask) {
-        free(node->mask);
+    printf("INFO: Modifying route entry: %s/%s\n", dest_addr, current_mask);
+    
+    // If mask is being changed, check if new prefix already exists
+    if (new_mask && strcmp(current_mask, new_mask) != 0) {
+        route_table_node_t *existing = get_route_table_node_by_dest_and_mask(dest_addr, new_mask);
+        if (existing) {
+            printf("ERROR: Route entry with new prefix %s/%s already exists\n", dest_addr, new_mask);
+            return 0; // Failed - new prefix already exists
+        }
+    }
+    
+    // Update fields if new values are provided (non-NULL)
+    if (new_mask && strcmp(current_mask, new_mask) != 0) {
+        char *old_mask = node->mask;
         node->mask = strdup(new_mask);
+        if (old_mask) {
+            free(old_mask);
+        }
+        printf("INFO: Updated mask from %s to %s\n", current_mask, node->mask);
     }
     
-    // Update OIF if provided
     if (new_oif) {
-        free(node->oif);
+        char *old_oif = node->oif;
         node->oif = strdup(new_oif);
+        if (old_oif) {
+            free(old_oif);
+        }
+        printf("INFO: Updated OIF to %s\n", node->oif);
     }
     
-    // Update gateway if provided
     if (new_gateway) {
-        free(node->gateway);
+        char *old_gateway = node->gateway;
         node->gateway = strdup(new_gateway);
+        if (old_gateway) {
+            free(old_gateway);
+        }
+        printf("INFO: Updated gateway to %s\n", node->gateway);
     }
-    
-    printf("INFO: Modified route entry: %s/%s via %s (OIF: %s)\n",
-           node->dest_addr ? node->dest_addr : "(null)",
-           node->mask ? node->mask : "(null)",
-           node->gateway ? node->gateway : "(null)",
-           node->oif ? node->oif : "(null)");
     
     // Notify subscribers about the modification
     notify_subscribers(node, NFC_MOD);
