@@ -302,6 +302,7 @@ This Publisher-Subscriber notification mechanism demonstrates a **production-rea
 - **Clean, extensible architecture**
 
 The system serves as an excellent foundation for building notification systems in network management, distributed systems, or any domain requiring real-time state change notifications.
+```
 ┌─────────────────┐            ┌─────────────────┐            ┌─────────────────┐
 │ 192.168.1.2/24  │◄───────────┤ 192.168.1.3/24  │◄───────────┤ 192.168.1.4/24  │
 │ eth0/192.168.0.1│            │ eth0/192.168.0.2│            │ eth0/192.168.0.3│
